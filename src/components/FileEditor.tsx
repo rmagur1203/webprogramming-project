@@ -243,6 +243,13 @@ export function FileEditor({
         bodyClasses.contains("prism-okaidia") ||
         bodyClasses.contains("prism-dark");
       setIsDarkTheme(isDark);
+
+      // // html 요소에 다크 모드 클래스 추가/제거
+      // if (isDark) {
+      //   document.documentElement.classList.add("dark");
+      // } else {
+      //   document.documentElement.classList.remove("dark");
+      // }
     };
 
     // 초기 체크
@@ -307,23 +314,11 @@ export function FileEditor({
   }
 
   return (
-    <div
-      className={`fixed inset-0 z-50 overflow-auto flex items-center justify-center bg-black bg-opacity-50 ${
-        isDarkTheme ? "dark-theme" : ""
-      }`}
-    >
-      <div
-        className={`relative w-full max-w-6xl max-h-full mx-auto my-8 p-4 ${
-          isDarkTheme ? "bg-gray-800" : "bg-white"
-        } rounded-lg shadow-xl`}
-      >
+    <div className="fixed inset-0 z-50 overflow-auto flex items-center justify-center bg-black/50 dark:bg-black/70">
+      <div className="relative w-full max-w-6xl max-h-full mx-auto my-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl">
         <button
           onClick={onClose}
-          className={`absolute top-4 right-4 ${
-            isDarkTheme
-              ? "text-gray-300 hover:text-white"
-              : "text-gray-600 hover:text-gray-900"
-          } focus:outline-none`}
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white focus:outline-none"
         >
           <svg
             className="w-6 h-6"
@@ -341,30 +336,22 @@ export function FileEditor({
           </svg>
         </button>
 
-        <h1
-          className={`text-2xl font-bold mb-4 ${
-            isDarkTheme ? "text-white" : "text-gray-800"
-          }`}
-        >
+        <h1 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
           {file?.filename || "파일 편집"}
         </h1>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded dark:bg-red-900 dark:text-red-200">
             {error}
           </div>
         )}
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
           </div>
         ) : file ? (
-          <div
-            className={`${
-              isDarkTheme ? "bg-gray-800" : "bg-gray-50"
-            } rounded-lg overflow-hidden`}
-          >
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden">
             <CodeEditor
               fileId={file.id}
               filename={file.filename}

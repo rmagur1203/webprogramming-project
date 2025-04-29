@@ -84,30 +84,30 @@ export function App() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        로딩 중...
+      <div className="flex justify-center items-center h-screen dark:bg-gray-900">
+        <div>로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
-      <header className="bg-white shadow-md">
+    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-md">
         <div className="max-w-full w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
               정적 웹사이트 호스팅
             </h1>
           </div>
 
           {isLoggedIn && user && (
             <div className="flex items-center gap-4">
-              <span className="text-gray-600">
+              <span className="text-gray-600 dark:text-gray-300">
                 안녕하세요, {user.username}님!
               </span>
               <button
                 onClick={handleLogout}
-                className="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 focus:outline-none"
+                className="bg-red-600 text-white py-1 px-3 rounded-md hover:bg-red-700 focus:outline-none dark:bg-red-700 dark:hover:bg-red-800"
               >
                 로그아웃
               </button>
@@ -119,20 +119,20 @@ export function App() {
       <main className="flex-grow max-w-full w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!isLoggedIn ? (
           <div className="max-w-md mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-              <h2 className="text-2xl font-bold mb-4 text-center">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+              <h2 className="text-2xl font-bold mb-4 text-center dark:text-white">
                 웹프로그래밍 호스팅 프로젝트
               </h2>
-              <p className="mb-2">
+              <p className="mb-2 dark:text-gray-300">
                 이 서비스를 사용하면 다음과 같은 작업을 할 수 있습니다:
               </p>
-              <ul className="list-disc pl-5 mb-4 space-y-1">
+              <ul className="list-disc pl-5 mb-4 space-y-1 dark:text-gray-300">
                 <li>HTML, CSS, JavaScript 파일 업로드</li>
                 <li>웹 에디터로 파일 내용 직접 수정</li>
                 <li>정적 웹사이트 배포 및 호스팅</li>
                 <li>파일 관리 및 정리</li>
               </ul>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 ※{" "}
                 {showRegisterForm
                   ? "회원가입하여 시작하세요!"
@@ -151,7 +151,7 @@ export function App() {
                 <div className="mt-4 text-center">
                   <button
                     onClick={handleGoToRegister}
-                    className="text-blue-500 hover:underline"
+                    className="text-blue-500 hover:underline dark:text-blue-400"
                   >
                     계정이 없으신가요? 회원가입
                   </button>
@@ -164,8 +164,8 @@ export function App() {
         )}
       </main>
 
-      <footer className="bg-white shadow-inner py-8 mt-auto">
-        <div className="max-w-full w-full mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-sm">
+      <footer className="bg-white dark:bg-gray-800 shadow-inner py-8 mt-auto">
+        <div className="max-w-full w-full mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500 dark:text-gray-400 text-sm">
           <p>© 2025 정적 웹사이트 호스팅 서비스. 모든 권리 보유.</p>
         </div>
       </footer>

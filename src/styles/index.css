@@ -14,12 +14,36 @@
   }
 }
 
-/* 다크 테마 적용 - 레이어 외부로 이동하여 우선순위 높임 */
+/* 다크 테마 적용 - dark 클래스 자동 추가 */
 body.prism-tomorrow,
 body.prism-okaidia,
 body.prism-dark {
   background-color: #1a202c !important;
   color: #f7fafc !important;
+}
+
+/* dark 클래스 자동 설정 - Tailwind 다크 모드 연동 */
+body.prism-tomorrow,
+body.prism-okaidia,
+body.prism-dark {
+  --tw-dark-mode: 1;
+}
+
+html:has(body.prism-tomorrow),
+html:has(body.prism-okaidia),
+html:has(body.prism-dark) {
+  class: dark;
+}
+
+/* 자바스크립트 기반 다크 모드 감지 */
+html.dark body,
+body.dark,
+body.prism-tomorrow,
+body.prism-okaidia,
+body.prism-dark {
+  --tw-bg-opacity: 1;
+  background-color: rgba(26, 32, 44, var(--tw-bg-opacity)) !important;
+  color: rgba(247, 250, 252, var(--tw-bg-opacity)) !important;
 }
 
 /* 다크 테마에서 배경색 변경 */
