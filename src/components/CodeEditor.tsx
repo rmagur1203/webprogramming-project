@@ -218,11 +218,20 @@ export function CodeEditor({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(
+    () =>
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
   const [showLineNumbers, setShowLineNumbers] = useState(true);
   const [autoSave, setAutoSave] = useState(false);
   const [fontSize, setFontSize] = useState(14);
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(
+    window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "tomorrow"
+      : "light"
+  );
   const [autoComplete, setAutoComplete] = useState(true);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedSuggestion, setSelectedSuggestion] = useState(0);
@@ -375,6 +384,35 @@ export function CodeEditor({
       }
     };
   }, [theme]);
+
+  // 시스템 다크 모드 설정 변경 감지
+  useEffect(() => {
+    const darkModeMediaQuery = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    );
+
+    const handleDarkModeChange = (e: MediaQueryListEvent) => {
+      const newDarkMode = e.matches;
+      // 시스템 설정이 변경되면 테마도 자동으로 변경
+      setTheme(newDarkMode ? "tomorrow" : "light");
+    };
+
+    // 이벤트 리스너 등록 (최신 브라우저)
+    if (darkModeMediaQuery.addEventListener) {
+      darkModeMediaQuery.addEventListener("change", handleDarkModeChange);
+    } else {
+      // 이전 브라우저 지원 (Safari 13.0 이하)
+      darkModeMediaQuery.addListener(handleDarkModeChange);
+    }
+
+    return () => {
+      if (darkModeMediaQuery.removeEventListener) {
+        darkModeMediaQuery.removeEventListener("change", handleDarkModeChange);
+      } else {
+        darkModeMediaQuery.removeListener(handleDarkModeChange);
+      }
+    };
+  }, []);
 
   // 스크롤 동기화
   const syncScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {

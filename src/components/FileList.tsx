@@ -774,7 +774,10 @@ export function FileList() {
             <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
               {/* 렌더링 된 파일/폴더 목록은 이 부분에 표시됩니다 */}
               {getSortedEntries().map((entry, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr
+                  key={index}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     {entry.isDirectory ? (
                       <button

@@ -244,12 +244,12 @@ export function FileEditor({
         bodyClasses.contains("prism-dark");
       setIsDarkTheme(isDark);
 
-      // // html 요소에 다크 모드 클래스 추가/제거
-      // if (isDark) {
-      //   document.documentElement.classList.add("dark");
-      // } else {
-      //   document.documentElement.classList.remove("dark");
-      // }
+      // html 요소에 다크 모드 클래스 추가/제거
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
     };
 
     // 초기 체크
