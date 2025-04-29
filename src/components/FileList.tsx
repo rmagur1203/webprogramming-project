@@ -42,6 +42,14 @@ export function FileList() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [diskUsage, setDiskUsage] = useState<DiskUsage | null>(null);
 
+  // 모달 관련 상태 추가
+  const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [selectedEntry, setSelectedEntry] = useState<FileEntry | null>(null);
+
   // 정렬 상태를 관리하는 상태 추가
   const [sortConfig, setSortConfig] = useState<{
     key: "name" | "size" | "mtime";
@@ -267,17 +275,34 @@ export function FileList() {
     }
   };
 
+  // 폴더 생성 모달 표시
+  const openCreateFolderModal = () => {
+    setNewFolderName("");
+    setShowCreateFolderModal(true);
+  };
+
   // 폴더 생성 처리
-  const handleCreateFolder = async () => {
-    const folderName = prompt("생성할 폴더 이름을 입력하세요:");
-    if (!folderName || !currentUser) return;
+  const handleCreateFolder = () => {
+    if (showCreateFolderModal) {
+      createFolder();
+    } else {
+      openCreateFolderModal();
+    }
+  };
+
+  // 폴더 생성 실행
+  const createFolder = async () => {
+    if (!newFolderName || !currentUser) {
+      setShowCreateFolderModal(false);
+      return;
+    }
 
     try {
       // 경로 합치기 (현재 경로가 /이면 슬래시 중복 방지)
       const folderPath =
         currentPath === "/"
-          ? `${currentPath}${folderName}`
-          : `${currentPath}/${folderName}`;
+          ? `${currentPath}${newFolderName}`
+          : `${currentPath}/${newFolderName}`;
 
       const response = await fetch(
         `/api/users/${currentUser.id}/directory/create`,
@@ -300,72 +325,33 @@ export function FileList() {
       // 폴더 생성 성공 시 현재 디렉토리 새로고침
       fetchDirectoryContents(currentPath);
       fetchDiskUsage(); // 디스크 사용량 업데이트
+      setShowCreateFolderModal(false);
     } catch (error) {
       console.error("폴더 생성 중 오류 발생:", error);
       alert("폴더 생성 중 오류가 발생했습니다.");
     }
   };
 
-  // 파일/폴더 삭제 처리
-  const handleDelete = async (name: string, isDirectory: boolean) => {
-    if (!currentUser) return;
-
-    const itemType = isDirectory ? "폴더" : "파일";
-    const confirmDelete = window.confirm(
-      `정말로 이 ${itemType}을(를) 삭제하시겠습니까: ${name}?`
-    );
-
-    if (!confirmDelete) return;
-
-    try {
-      // 경로 합치기
-      const itemPath =
-        currentPath === "/"
-          ? `${currentPath}${name}`
-          : `${currentPath}/${name}`;
-
-      const response = await fetch(
-        `/api/users/${currentUser.id}/files/delete`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            path: itemPath,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        await handleApiError(response, `${itemType} 삭제`);
-        return;
-      }
-
-      // 삭제 성공 시 현재 디렉토리 새로고침
-      fetchDirectoryContents(currentPath);
-      fetchDiskUsage(); // 디스크 사용량 업데이트
-    } catch (error) {
-      console.error(`${itemType} 삭제 중 오류 발생:`, error);
-      alert(`${itemType} 삭제 중 오류가 발생했습니다.`);
-    }
+  // 이름 변경 모달 표시
+  const openRenameModal = (entry: FileEntry) => {
+    setSelectedEntry(entry);
+    setNewName(entry.name);
+    setShowRenameModal(true);
   };
 
-  // 파일/폴더 이름 변경 처리
-  const handleRename = async (name: string, isDirectory: boolean) => {
-    if (!currentUser) return;
-
-    const itemType = isDirectory ? "폴더" : "파일";
-    const newName = prompt(`새 ${itemType} 이름을 입력하세요:`, name);
-
-    if (!newName || newName === name) return;
+  // 항목 이름 변경 실행
+  const renameEntry = async () => {
+    if (!selectedEntry || !newName || !currentUser) {
+      setShowRenameModal(false);
+      return;
+    }
 
     try {
       // 현재 항목의 전체 경로
       const oldPath =
         currentPath === "/"
-          ? `${currentPath}${name}`
-          : `${currentPath}/${name}`;
+          ? `${currentPath}${selectedEntry.name}`
+          : `${currentPath}/${selectedEntry.name}`;
 
       // 같은 디렉토리에서 새 이름으로 변경된 경로
       const newPath =
@@ -388,16 +374,87 @@ export function FileList() {
       );
 
       if (!response.ok) {
-        await handleApiError(response, `${itemType} 이름 변경`);
+        await handleApiError(
+          response,
+          `${selectedEntry.isDirectory ? "폴더" : "파일"} 이름 변경`
+        );
         return;
       }
 
       // 이름 변경 성공 시 현재 디렉토리 새로고침
       fetchDirectoryContents(currentPath);
       fetchDiskUsage(); // 디스크 사용량 업데이트
+      setShowRenameModal(false);
     } catch (error) {
-      console.error(`${itemType} 이름 변경 중 오류 발생:`, error);
-      alert(`${itemType} 이름 변경 중 오류가 발생했습니다.`);
+      console.error(`이름 변경 중 오류 발생:`, error);
+      alert(`이름 변경 중 오류가 발생했습니다.`);
+    }
+  };
+
+  // 삭제 모달 표시
+  const openDeleteModal = (entry: FileEntry) => {
+    setSelectedEntry(entry);
+    setShowDeleteModal(true);
+  };
+
+  // 항목 삭제 실행
+  const deleteEntry = async () => {
+    if (!selectedEntry || !currentUser) {
+      setShowDeleteModal(false);
+      return;
+    }
+
+    try {
+      // 경로 합치기
+      const itemPath =
+        currentPath === "/"
+          ? `${currentPath}${selectedEntry.name}`
+          : `${currentPath}/${selectedEntry.name}`;
+
+      const response = await fetch(
+        `/api/users/${currentUser.id}/files/delete`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            path: itemPath,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        await handleApiError(
+          response,
+          `${selectedEntry.isDirectory ? "폴더" : "파일"} 삭제`
+        );
+        return;
+      }
+
+      // 삭제 성공 시 현재 디렉토리 새로고침
+      fetchDirectoryContents(currentPath);
+      fetchDiskUsage(); // 디스크 사용량 업데이트
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error(`삭제 중 오류 발생:`, error);
+      alert(`삭제 중 오류가 발생했습니다.`);
+    }
+  };
+
+  // 기존 handleRename 함수 수정
+  const handleRename = (name: string, isDirectory: boolean) => {
+    const entry = directoryInfo?.entries.find((e) => e.name === name);
+    if (entry) {
+      openRenameModal(entry);
+    }
+  };
+
+  // 기존 handleDelete 함수 수정
+  const handleDelete = (name: string, isDirectory: boolean) => {
+    const entry = directoryInfo?.entries.find((e) => e.name === name);
+    if (entry) {
+      openDeleteModal(entry);
     }
   };
 
@@ -594,23 +651,27 @@ export function FileList() {
     const totalSize = formatFileSize(diskUsage.total);
 
     // 퍼센트에 따른 색상 결정
-    let barColor = "bg-green-500";
-    if (percentage > 90) barColor = "bg-red-500";
-    else if (percentage > 70) barColor = "bg-yellow-500";
+    let barColor = "bg-green-500 dark:bg-green-600";
+    if (percentage > 90) barColor = "bg-red-500 dark:bg-red-600";
+    else if (percentage > 70) barColor = "bg-yellow-500 dark:bg-yellow-600";
 
     return (
-      <div className="mb-4 bg-white p-4 rounded-lg shadow-md">
+      <div className="mb-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
         <div className="flex justify-between mb-1">
-          <span className="text-sm font-medium">디스크 사용량</span>
-          <span className="text-sm font-medium">{percentage.toFixed(1)}%</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            디스크 사용량
+          </span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {percentage.toFixed(1)}%
+          </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
           <div
             className={`${barColor} h-2.5 rounded-full`}
             style={{ width: `${percentage}%` }}
           ></div>
         </div>
-        <div className="flex justify-between mt-1 text-xs text-gray-500">
+        <div className="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
           <span>{usedSize} 사용 중</span>
           <span>총 {totalSize}</span>
         </div>
@@ -619,186 +680,264 @@ export function FileList() {
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      {/* 디스크 사용량 표시 */}
       <DiskUsageBar />
-      <div className="max-w-full w-full mx-auto py-6 px-6 bg-white rounded-lg shadow-md">
-        {/* 디스크 사용량 표시 */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">파일 탐색기</h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => fetchDirectoryContents(currentPath)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none"
-            >
-              새로고침
-            </button>
-            <button
-              onClick={handleCreateFolder}
-              className="bg-purple-500 text-white px-4 py-2 rounded-md hover:bg-purple-600 focus:outline-none"
-            >
-              폴더 생성
-            </button>
-            <button
-              onClick={handleCreateFile}
-              className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none"
-            >
-              파일 생성
-            </button>
-            <button
-              onClick={handleUploadFile}
-              className="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 focus:outline-none"
-            >
-              파일 업로드
-            </button>
+
+      {/* 현재 경로 표시 */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center space-x-2">
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+              파일 목록
+            </h2>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              현재 경로: {currentPath || "/"}
+            </span>
           </div>
+          <button
+            onClick={() => {
+              console.log(`상위 폴더로 이동: ${directoryInfo?.parentPath}`);
+              navigateToPath(directoryInfo?.parentPath || "/");
+            }}
+            disabled={currentPath === ""}
+            className={`px-3 py-1 rounded-md text-sm 
+              ${
+                currentPath === ""
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
+                  : "bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+              }`}
+          >
+            상위 폴더로 이동
+          </button>
         </div>
 
-        {/* 현재 경로 표시 */}
-        <div className="bg-gray-100 p-2 mb-4 rounded flex items-center">
-          <span className="mr-2">📂</span>
-          <span className="font-medium">{currentPath}</span>
+        {/* 파일 작업 버튼 그룹 */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => fetchDirectoryContents(currentPath)}
+            className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+          >
+            새로고침
+          </button>
+          <button
+            onClick={handleCreateFolder}
+            className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700"
+          >
+            폴더 생성
+          </button>
+          <button
+            onClick={handleCreateFile}
+            className="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700"
+          >
+            파일 생성
+          </button>
+          <button
+            onClick={handleUploadFile}
+            className="px-3 py-1 bg-orange-500 text-white rounded-md hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700"
+          >
+            파일 업로드
+          </button>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="py-8 text-center">파일 목록을 불러오는 중...</div>
-        ) : directoryInfo && directoryInfo.entries.length > 0 ? (
-          <div className="overflow-x-auto">
-            {/* 상위 디렉토리로 이동 버튼 */}
-            {currentPath !== "/" && (
-              <div className="mb-2">
-                <button
-                  onClick={() => {
-                    console.log(
-                      `상위 폴더로 이동: ${directoryInfo.parentPath}`
-                    );
-                    navigateToPath(directoryInfo.parentPath);
-                  }}
-                  className="text-blue-500 hover:underline flex items-center"
+        {/* 파일 목록 테이블 */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
                 >
-                  <span className="mr-1">⬆️</span> 상위 디렉토리로
-                </button>
-              </div>
-            )}
-
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    onClick={() => requestSort("name")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    <div className={getHeaderClass("name")}>
-                      이름 {getSortIcon("name")}
+                  이름
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
+                  크기
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
+                  수정일
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
+                  작업
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+              {/* 렌더링 된 파일/폴더 목록은 이 부분에 표시됩니다 */}
+              {getSortedEntries().map((entry, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {entry.isDirectory ? (
+                      <button
+                        onClick={() => {
+                          // API URL 대신 실제 경로 사용
+                          const directoryPath =
+                            currentPath === "/"
+                              ? `/${entry.name}`
+                              : `${currentPath}/${entry.name}`;
+                          console.log(`폴더 경로 이동: ${directoryPath}`);
+                          navigateToPath(directoryPath);
+                        }}
+                        className="flex items-center text-blue-600 hover:underline"
+                      >
+                        <span className="mr-2">📁</span> {entry.name}
+                      </button>
+                    ) : (
+                      <a
+                        href={entry.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-blue-600 hover:underline"
+                      >
+                        <span className="mr-2">{getFileIcon(entry.name)}</span>{" "}
+                        {entry.name}
+                      </a>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {entry.isDirectory ? "-" : formatFileSize(entry.size)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(entry.mtime)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      {!entry.isDirectory &&
+                        entry.contentUrl &&
+                        isEditable(entry.name) && (
+                          <button
+                            onClick={() => handleEditFile(entry.contentUrl!)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            편집
+                          </button>
+                        )}
+                      <button
+                        onClick={() =>
+                          handleRename(entry.name, entry.isDirectory)
+                        }
+                        className="text-yellow-600 hover:text-yellow-900"
+                      >
+                        이름변경
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDelete(entry.name, entry.isDirectory)
+                        }
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        삭제
+                      </button>
                     </div>
-                  </th>
-                  <th
-                    onClick={() => requestSort("size")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    <div className={getHeaderClass("size")}>
-                      크기 {getSortIcon("size")}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => requestSort("mtime")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    <div className={getHeaderClass("mtime")}>
-                      수정일 {getSortIcon("mtime")}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    작업
-                  </th>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {/* 정렬된 파일 목록 표시 */}
-                {getSortedEntries().map((entry, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {entry.isDirectory ? (
-                        <button
-                          onClick={() => {
-                            // API URL 대신 실제 경로 사용
-                            const directoryPath =
-                              currentPath === "/"
-                                ? `/${entry.name}`
-                                : `${currentPath}/${entry.name}`;
-                            console.log(`폴더 경로 이동: ${directoryPath}`);
-                            navigateToPath(directoryPath);
-                          }}
-                          className="flex items-center text-blue-600 hover:underline"
-                        >
-                          <span className="mr-2">📁</span> {entry.name}
-                        </button>
-                      ) : (
-                        <a
-                          href={entry.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center text-blue-600 hover:underline"
-                        >
-                          <span className="mr-2">
-                            {getFileIcon(entry.name)}
-                          </span>{" "}
-                          {entry.name}
-                        </a>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {entry.isDirectory ? "-" : formatFileSize(entry.size)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(entry.mtime)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        {!entry.isDirectory &&
-                          entry.contentUrl &&
-                          isEditable(entry.name) && (
-                            <button
-                              onClick={() => handleEditFile(entry.contentUrl!)}
-                              className="text-indigo-600 hover:text-indigo-900"
-                            >
-                              편집
-                            </button>
-                          )}
-                        <button
-                          onClick={() =>
-                            handleRename(entry.name, entry.isDirectory)
-                          }
-                          className="text-yellow-600 hover:text-yellow-900"
-                        >
-                          이름변경
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDelete(entry.name, entry.isDirectory)
-                          }
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="py-8 text-center bg-gray-50 rounded">
-            이 디렉토리에 파일이 없습니다. 파일을 생성하거나 업로드하세요.
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </>
+
+      {/* 폴더 생성 모달 */}
+      {showCreateFolderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-96">
+            <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              새 폴더 생성
+            </h3>
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="폴더 이름"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowCreateFolderModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              >
+                취소
+              </button>
+              <button
+                onClick={createFolder}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                생성
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 이름 변경 모달 */}
+      {showRenameModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-96">
+            <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              이름 변경
+            </h3>
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="새 이름"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowRenameModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              >
+                취소
+              </button>
+              <button
+                onClick={renameEntry}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                변경
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-96">
+            <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              삭제 확인
+            </h3>
+            <p className="mb-4 text-gray-700 dark:text-gray-300">
+              '{selectedEntry?.name}'을(를) 삭제하시겠습니까?
+              {selectedEntry?.isDirectory && " 폴더 내 모든 파일이 삭제됩니다."}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              >
+                취소
+              </button>
+              <button
+                onClick={deleteEntry}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
