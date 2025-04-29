@@ -317,37 +317,6 @@ export function CodeEditor({
         text-shadow: none !important;
       }
       
-      .token.comment,
-      .token.prolog,
-      .token.doctype,
-      .token.cdata,
-      .token.punctuation,
-      .token.selector,
-      .token.tag,
-      .token.attr-name,
-      .token.attr-value,
-      .token.string,
-      .token.char,
-      .token.builtin,
-      .token.inserted,
-      .token.operator,
-      .token.entity,
-      .token.url,
-      .language-css .token.string,
-      .style .token.string,
-      .token.atrule,
-      .token.keyword,
-      .token.property,
-      .token.boolean,
-      .token.number,
-      .token.constant,
-      .token.symbol,
-      .token.deleted,
-      .token.function,
-      .token.namespace {
-        text-shadow: none !important;
-      }
-      
       /* 다크 모드 테마에서 코드 색상 명확하게 설정 */
       body.prism-tomorrow code[class*="language-"],
       body.prism-okaidia code[class*="language-"],

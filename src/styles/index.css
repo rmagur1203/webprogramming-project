@@ -12,10 +12,6 @@
   #root {
     @apply w-full h-full flex flex-col;
   }
-
-  h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, label {
-    text-shadow: none !important;
-  }
 }
 
 body::before {
