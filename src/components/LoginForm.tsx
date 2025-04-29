@@ -28,7 +28,11 @@ export function LoginForm({ onLoginSuccess }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "로그인에 실패했습니다.");
+        if (response.status === 401) {
+          setError("로그인 실패: 잘못된 사용자명 또는 비밀번호입니다.");
+        } else {
+          setError(data.error || "로그인에 실패했습니다.");
+        }
         return;
       }
 

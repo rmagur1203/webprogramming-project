@@ -1,6 +1,7 @@
 import "../styles/index.css";
 import { useEffect, useState } from "react";
 import { LoginForm } from "./LoginForm";
+import { RegisterForm } from "./RegisterForm";
 import { FileList } from "./FileList";
 
 interface User {
@@ -12,6 +13,7 @@ export function App() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showRegisterForm, setShowRegisterForm] = useState<boolean>(false);
 
   // 사용자 인증 상태 확인
   useEffect(() => {
@@ -65,6 +67,21 @@ export function App() {
     }
   };
 
+  // 회원가입 폼으로 전환
+  const handleGoToRegister = () => {
+    setShowRegisterForm(true);
+  };
+
+  // 로그인 폼으로 전환
+  const handleGoToLogin = () => {
+    setShowRegisterForm(false);
+  };
+
+  // 회원가입 성공 처리
+  const handleRegisterSuccess = () => {
+    setShowRegisterForm(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -115,9 +132,32 @@ export function App() {
                 <li>정적 웹사이트 배포 및 호스팅</li>
                 <li>파일 관리 및 정리</li>
               </ul>
-              <p className="text-sm text-gray-600">※ 로그인하여 시작하세요!</p>
+              <p className="text-sm text-gray-600">
+                ※{" "}
+                {showRegisterForm
+                  ? "회원가입하여 시작하세요!"
+                  : "로그인하여 시작하세요!"}
+              </p>
             </div>
-            <LoginForm onLoginSuccess={handleLoginSuccess} />
+
+            {showRegisterForm ? (
+              <RegisterForm
+                onRegisterSuccess={handleRegisterSuccess}
+                onBackToLogin={handleGoToLogin}
+              />
+            ) : (
+              <div>
+                <LoginForm onLoginSuccess={handleLoginSuccess} />
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={handleGoToRegister}
+                    className="text-blue-500 hover:underline"
+                  >
+                    계정이 없으신가요? 회원가입
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <FileList />
