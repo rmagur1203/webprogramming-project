@@ -32,6 +32,7 @@ export function FileEditor({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(false);
 
   // 현재 사용자 정보 가져오기
   useEffect(() => {
@@ -233,6 +234,30 @@ export function FileEditor({
     }
   }, [fileId, userId, filename, currentUser]);
 
+  // 테마 상태 추가
+  useEffect(() => {
+    const checkTheme = () => {
+      const bodyClasses = document.body.classList;
+      const isDark =
+        bodyClasses.contains("prism-tomorrow") ||
+        bodyClasses.contains("prism-okaidia") ||
+        bodyClasses.contains("prism-dark");
+      setIsDarkTheme(isDark);
+    };
+
+    // 초기 체크
+    checkTheme();
+
+    // 변화 감지를 위한 MutationObserver 설정
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   // 파일 내용 저장
   const handleSaveContent = async (content: string): Promise<boolean> => {
     if (!file) return false;
@@ -282,23 +307,73 @@ export function FileEditor({
   }
 
   return (
-    <div className="w-full h-full p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">{file.filename} 편집</h1>
+    <div
+      className={`fixed inset-0 z-50 overflow-auto flex items-center justify-center bg-black bg-opacity-50 ${
+        isDarkTheme ? "dark-theme" : ""
+      }`}
+    >
+      <div
+        className={`relative w-full max-w-6xl max-h-full mx-auto my-8 p-4 ${
+          isDarkTheme ? "bg-gray-800" : "bg-white"
+        } rounded-lg shadow-xl`}
+      >
         <button
           onClick={onClose}
-          className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+          className={`absolute top-4 right-4 ${
+            isDarkTheme
+              ? "text-gray-300 hover:text-white"
+              : "text-gray-600 hover:text-gray-900"
+          } focus:outline-none`}
         >
-          목록으로 돌아가기
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            ></path>
+          </svg>
         </button>
-      </div>
 
-      <CodeEditor
-        fileId={file.id}
-        filename={file.filename}
-        userId={file.userId}
-        onSave={handleSaveContent}
-      />
+        <h1
+          className={`text-2xl font-bold mb-4 ${
+            isDarkTheme ? "text-white" : "text-gray-800"
+          }`}
+        >
+          {file?.filename || "파일 편집"}
+        </h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : file ? (
+          <div
+            className={`${
+              isDarkTheme ? "bg-gray-800" : "bg-gray-50"
+            } rounded-lg overflow-hidden`}
+          >
+            <CodeEditor
+              fileId={file.id}
+              filename={file.filename}
+              userId={file.userId}
+              onSave={handleSaveContent}
+            />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

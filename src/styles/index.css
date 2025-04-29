@@ -12,53 +12,96 @@
   #root {
     @apply w-full h-full flex flex-col;
   }
-  
-  /* 다크 테마 적용 */
-  body.prism-tomorrow,
-  body.prism-okaidia,
-  body.prism-dark {
-    @apply bg-[#1a202c] text-[#f7fafc];
-  }
-  
-  /* 다크 테마에서 배경색 변경 */
-  body.prism-tomorrow .bg-white,
-  body.prism-okaidia .bg-white,
-  body.prism-dark .bg-white {
-    @apply bg-gray-800;
-  }
-  
-  /* 다크 테마에서 텍스트 색상 변경 */
-  body.prism-tomorrow .text-gray-800,
-  body.prism-okaidia .text-gray-800,
-  body.prism-dark .text-gray-800 {
-    @apply text-gray-100;
-  }
-  
-  body.prism-tomorrow .text-gray-600,
-  body.prism-okaidia .text-gray-600,
-  body.prism-dark .text-gray-600 {
-    @apply text-gray-300;
-  }
-  
-  body.prism-tomorrow .text-gray-500,
-  body.prism-okaidia .text-gray-500,
-  body.prism-dark .text-gray-500 {
-    @apply text-gray-400;
-  }
-  
-  /* 다크 테마에서 배경색 변경 */
-  body.prism-tomorrow .bg-gray-100,
-  body.prism-okaidia .bg-gray-100,
-  body.prism-dark .bg-gray-100 {
-    @apply bg-gray-900;
-  }
-  
-  /* 다크 테마에서 그림자 색상 변경 */
-  body.prism-tomorrow .shadow-md,
-  body.prism-okaidia .shadow-md,
-  body.prism-dark .shadow-md {
-    --tw-shadow-color: rgba(0, 0, 0, 0.3);
-  }
+}
+
+/* 다크 테마 적용 - 레이어 외부로 이동하여 우선순위 높임 */
+body.prism-tomorrow,
+body.prism-okaidia,
+body.prism-dark {
+  background-color: #1a202c !important;
+  color: #f7fafc !important;
+}
+
+/* 다크 테마에서 배경색 변경 */
+body.prism-tomorrow .bg-white,
+body.prism-okaidia .bg-white,
+body.prism-dark .bg-white {
+  background-color: #2d3748 !important;
+}
+
+body.prism-tomorrow .bg-gray-100,
+body.prism-okaidia .bg-gray-100,
+body.prism-dark .bg-gray-100 {
+  background-color: #1a202c !important;
+}
+
+/* 다크 테마에서 텍스트 색상 변경 */
+body.prism-tomorrow .text-gray-800,
+body.prism-okaidia .text-gray-800,
+body.prism-dark .text-gray-800 {
+  color: #f7fafc !important;
+}
+
+body.prism-tomorrow .text-gray-600,
+body.prism-okaidia .text-gray-600,
+body.prism-dark .text-gray-600 {
+  color: #e2e8f0 !important;
+}
+
+body.prism-tomorrow .text-gray-500,
+body.prism-okaidia .text-gray-500,
+body.prism-dark .text-gray-500 {
+  color: #cbd5e0 !important;
+}
+
+/* 특정 컨테이너 요소 직접 타겟팅 */
+body.prism-tomorrow header,
+body.prism-okaidia header,
+body.prism-dark header {
+  background-color: #2d3748 !important;
+  color: #f7fafc !important;
+}
+
+body.prism-tomorrow main,
+body.prism-okaidia main,
+body.prism-dark main {
+  background-color: #1a202c !important;
+  color: #f7fafc !important;
+}
+
+body.prism-tomorrow footer,
+body.prism-okaidia footer,
+body.prism-dark footer {
+  background-color: #2d3748 !important;
+  color: #cbd5e0 !important;
+}
+
+/* 컨테이너 카드 스타일 변경 */
+body.prism-tomorrow .bg-white.p-4,
+body.prism-okaidia .bg-white.p-4,
+body.prism-dark .bg-white.p-4,
+body.prism-tomorrow .bg-white.p-6,
+body.prism-okaidia .bg-white.p-6,
+body.prism-dark .bg-white.p-6,
+body.prism-tomorrow .bg-white.shadow-md,
+body.prism-okaidia .bg-white.shadow-md,
+body.prism-dark .bg-white.shadow-md,
+body.prism-tomorrow .bg-white.shadow-sm,
+body.prism-okaidia .bg-white.shadow-sm,
+body.prism-dark .bg-white.shadow-sm {
+  background-color: #2d3748 !important;
+  color: #f7fafc !important;
+}
+
+/* 다크 테마에서 그림자 색상 변경 */
+body.prism-tomorrow .shadow-md,
+body.prism-okaidia .shadow-md,
+body.prism-dark .shadow-md,
+body.prism-tomorrow .shadow-sm,
+body.prism-okaidia .shadow-sm,
+body.prism-dark .shadow-sm {
+  --tw-shadow-color: rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
 }
 
 body::before {
