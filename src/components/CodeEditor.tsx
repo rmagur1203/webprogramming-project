@@ -310,6 +310,81 @@ export function CodeEditor({
         border: none !important;
         box-shadow: none !important;
       }
+      
+      code[class*="language-"],
+      pre[class*="language-"],
+      .token {
+        text-shadow: none !important;
+      }
+      
+      .token.comment,
+      .token.prolog,
+      .token.doctype,
+      .token.cdata,
+      .token.punctuation,
+      .token.selector,
+      .token.tag,
+      .token.attr-name,
+      .token.attr-value,
+      .token.string,
+      .token.char,
+      .token.builtin,
+      .token.inserted,
+      .token.operator,
+      .token.entity,
+      .token.url,
+      .language-css .token.string,
+      .style .token.string,
+      .token.atrule,
+      .token.keyword,
+      .token.property,
+      .token.boolean,
+      .token.number,
+      .token.constant,
+      .token.symbol,
+      .token.deleted,
+      .token.function,
+      .token.namespace {
+        text-shadow: none !important;
+      }
+      
+      /* 다크 모드 테마에서 코드 색상 명확하게 설정 */
+      body.prism-tomorrow code[class*="language-"],
+      body.prism-okaidia code[class*="language-"],
+      body.prism-dark code[class*="language-"] {
+        color: #f8f8f2 !important;
+      }
+      
+      /* 토큰별 색상 설정 - 다크 모드 */
+      body.prism-tomorrow .token.comment,
+      body.prism-okaidia .token.comment,
+      body.prism-dark .token.comment {
+        color: #6272a4 !important;
+      }
+      
+      body.prism-tomorrow .token.string,
+      body.prism-okaidia .token.string,
+      body.prism-dark .token.string {
+        color: #f1fa8c !important;
+      }
+      
+      body.prism-tomorrow .token.keyword,
+      body.prism-okaidia .token.keyword,
+      body.prism-dark .token.keyword {
+        color: #ff79c6 !important;
+      }
+      
+      body.prism-tomorrow .token.function,
+      body.prism-okaidia .token.function,
+      body.prism-dark .token.function {
+        color: #50fa7b !important;
+      }
+      
+      body.prism-tomorrow .token.number,
+      body.prism-okaidia .token.number,
+      body.prism-dark .token.number {
+        color: #bd93f9 !important;
+      }
     `;
     document.head.appendChild(styleEl);
 
@@ -739,6 +814,24 @@ export function CodeEditor({
         tab-size: 2 !important;
         -moz-tab-size: 2 !important;
       }
+      
+      /* 에디터 스타일 개선 */
+      .editor-preview, .editor-preview code {
+        color: inherit !important;
+      }
+      
+      /* 다크 모드일 때 에디터 스타일 */
+      body.prism-tomorrow .editor-preview,
+      body.prism-okaidia .editor-preview,
+      body.prism-dark .editor-preview {
+        background-color: #282c34 !important;
+      }
+      
+      /* 라이트 모드일 때 에디터 스타일 */
+      body.prism-light .editor-preview,
+      body.prism-solarized .editor-preview {
+        background-color: white !important;
+      }
     `;
     document.head.appendChild(styleEl);
 
@@ -957,7 +1050,8 @@ export function CodeEditor({
                 width: showLineNumbers ? "calc(100% - 60px)" : "100%",
                 margin: 0,
                 overflow: "auto",
-                backgroundColor: "white",
+                backgroundColor: isDarkMode ? "#282c34" : "white",
+                color: isDarkMode ? "#f8f8f2" : "#333",
                 zIndex: 10,
                 border: "none",
               }}

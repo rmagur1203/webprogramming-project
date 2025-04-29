@@ -26,23 +26,12 @@ export function FileEditor({
   contentPath,
   onClose,
   userId,
-  filename: propFilename,
+  filename,
 }: FileEditorProps) {
   const [file, setFile] = useState<FileDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [content, setContent] = useState<string>("");
-  const [originalContent, setOriginalContent] = useState<string>("");
-  const [saving, setSaving] = useState(false);
-  const [filename, setFilename] = useState<string>(propFilename || "");
-
-  // 파일 크기 포맷팅 함수
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + " bytes";
-    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    else return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-  };
 
   // 현재 사용자 정보 가져오기
   useEffect(() => {
@@ -61,150 +50,255 @@ export function FileEditor({
     fetchCurrentUser();
   }, []);
 
-  // 파일 내용 불러오기
+  // contentPath에서 파일 이름 추출
   useEffect(() => {
-    const fetchContent = async () => {
-      if (!contentPath) return;
+    if (contentPath && !filename) {
+      // contentPath 형식: /api/users/:userId/content/:filename
+      const parts = contentPath.split("/");
+      const extractedFileName = parts[parts.length - 1];
 
-      try {
-        console.log(`파일 내용 불러오기: ${contentPath}`);
+      if (extractedFileName && !filename) {
+        // userId가 없는 경우 contentPath에서 추출
+        if (!userId && parts.length >= 4) {
+          const extractedUserId = parts[3];
+          console.log(
+            `추출된 정보: userId=${extractedUserId}, filename=${extractedFileName}`
+          );
 
-        // contentPath에서 파일명 추출
-        const pathParts = contentPath.split("/");
-        const extractedFilename = pathParts[pathParts.length - 1];
-        if (extractedFilename) {
-          setFilename(extractedFilename);
+          // 파일 정보 로드
+          loadFileByUserAndFilename(extractedUserId, extractedFileName);
+        } else if (userId) {
+          console.log(
+            `파일 정보: userId=${userId}, filename=${extractedFileName}`
+          );
+          loadFileByUserAndFilename(userId, extractedFileName);
         }
-
-        const response = await fetch(contentPath);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const text = await response.text();
-        setContent(text);
-        setOriginalContent(text); // 원본 내용 저장
-      } catch (err) {
-        console.error("파일 내용 로드 오류:", err);
-        setError(
-          err instanceof Error
-            ? `파일을 불러오는데 실패했습니다: ${err.message}`
-            : "파일을 불러오는데 실패했습니다."
-        );
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchContent();
-  }, [contentPath]);
-
-  // 파일 저장
-  const handleSave = async () => {
-    if (!contentPath) {
-      setError("파일 경로가 정의되지 않았습니다.");
-      return;
     }
+  }, [contentPath, userId, filename]);
 
-    if (content === originalContent) {
-      // 변경 사항이 없으면 저장하지 않고 닫기
-      onClose();
-      return;
-    }
-
-    setSaving(true);
+  // 사용자 ID와 파일명으로 파일 정보 로드
+  const loadFileByUserAndFilename = async (uid: string, fname: string) => {
+    setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(contentPath, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "text/plain",
-        },
-        body: content,
-      });
+      // URL 디코딩 추가
+      const decodedFileName = decodeURIComponent(fname);
+      console.log(`파일 검색: 원본=${fname}, 디코딩=${decodedFileName}`);
+
+      // 사용자별 파일 API에서 파일 목록 가져오기
+      const response = await fetch(`/api/users/${uid}/files`);
+      if (!response.ok) {
+        throw new Error("파일 정보를 가져오는데 실패했습니다");
+      }
 
       const data = await response.json();
+      // 원본 이름과 디코딩된 이름 모두 검색
+      let fileDetails = data.entries.find((f: any) => f.name === fname);
+      if (!fileDetails) {
+        fileDetails = data.entries.find((f: any) => f.name === decodedFileName);
+      }
 
-      if (!response.ok) {
-        // 디스크 용량 초과 오류 처리
-        if (data.error && data.error.includes("디스크 용량 초과")) {
-          const requiredSpace = data.diskUsage?.required
-            ? formatFileSize(data.diskUsage.required)
-            : "추가 공간";
+      if (!fileDetails) {
+        console.warn(`파일을 찾을 수 없음: ${decodedFileName}`);
+        // 파일을 찾지 못한 경우에도 기본 정보로 생성
+        const mimeType = getMimeTypeFromFileName(decodedFileName);
+        setFile({
+          id: decodedFileName,
+          filename: decodedFileName,
+          mimeType: mimeType,
+          userId: uid,
+        });
+      } else {
+        setFile({
+          id: fileDetails.name,
+          filename: fileDetails.name,
+          mimeType:
+            fileDetails.mimeType || getMimeTypeFromFileName(fileDetails.name),
+          userId: uid,
+        });
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "파일 정보를 가져오는데 실패했습니다";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          setError(
-            `디스크 용량 부족: 파일을 저장하기 위해 ${requiredSpace}이(가) 필요합니다. 일부 파일을 삭제하여 공간을 확보하세요.`
-          );
-        } else {
-          setError(data.error || "파일 저장에 실패했습니다.");
-        }
+  // 파일 확장자에 따른 MIME 타입 추론
+  const getMimeTypeFromFileName = (filename: string): string => {
+    const extension = filename.split(".").pop()?.toLowerCase() || "";
+    const mimeTypes: Record<string, string> = {
+      txt: "text/plain",
+      html: "text/html",
+      css: "text/css",
+      js: "application/javascript",
+      json: "application/json",
+      xml: "application/xml",
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      pdf: "application/pdf",
+      md: "text/markdown",
+      csv: "text/csv",
+    };
+
+    return mimeTypes[extension] || "text/plain";
+  };
+
+  // 파일 정보 가져오기 (fileId 방식)
+  useEffect(() => {
+    async function fetchFileDetails() {
+      if (!fileId) {
         return;
       }
 
-      // 저장 성공 시 원본 내용 업데이트
-      setOriginalContent(content);
-      onClose(); // 편집기 닫기
-    } catch (err) {
-      console.error("파일 저장 오류:", err);
-      setError(
-        err instanceof Error
-          ? `파일 저장에 실패했습니다: ${err.message}`
-          : "파일 저장에 실패했습니다."
+      setLoading(true);
+      setError(null);
+
+      try {
+        // 현재 사용자 정보가 필요합니다
+        if (!currentUser) {
+          setError("사용자 정보를 가져오는데 실패했습니다");
+          setLoading(false);
+          return;
+        }
+
+        // URL 디코딩 추가
+        const decodedFileId = decodeURIComponent(fileId);
+        console.log(`파일 ID 검색: 원본=${fileId}, 디코딩=${decodedFileId}`);
+
+        // 사용자별 파일 API에서 파일 목록 가져오기
+        const response = await fetch(`/api/users/${currentUser.id}/files`);
+        if (!response.ok) {
+          throw new Error("파일 정보를 가져오는데 실패했습니다");
+        }
+
+        const data = await response.json();
+        // 원본 이름과 디코딩된 이름 모두 검색
+        let fileDetails = data.entries.find((f: any) => f.name === fileId);
+        if (!fileDetails) {
+          fileDetails = data.entries.find((f: any) => f.name === decodedFileId);
+        }
+
+        if (!fileDetails) {
+          console.warn(`파일을 찾을 수 없음: ${decodedFileId}`);
+          // 파일을 찾지 못한 경우에도 기본 정보로 생성
+          const mimeType = getMimeTypeFromFileName(decodedFileId);
+          setFile({
+            id: decodedFileId,
+            filename: decodedFileId,
+            mimeType: mimeType,
+            userId: currentUser.id,
+          });
+        } else {
+          setFile({
+            id: fileDetails.name,
+            filename: fileDetails.name,
+            mimeType:
+              fileDetails.mimeType || getMimeTypeFromFileName(fileDetails.name),
+            userId: currentUser.id,
+          });
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "파일 정보를 가져오는데 실패했습니다";
+        setError(message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // 유저 ID와 파일명이 모두 제공된 경우 (새로운 방식)
+    async function fetchFileByUserAndFilename() {
+      if (!userId || !filename) {
+        return;
+      }
+
+      loadFileByUserAndFilename(userId, filename);
+    }
+
+    if (userId && filename) {
+      fetchFileByUserAndFilename();
+    } else if (fileId && currentUser) {
+      fetchFileDetails();
+    }
+  }, [fileId, userId, filename, currentUser]);
+
+  // 파일 내용 저장
+  const handleSaveContent = async (content: string): Promise<boolean> => {
+    if (!file) return false;
+
+    try {
+      // 사용자 기반 경로로 저장
+      const response = await fetch(
+        `/api/users/${file.userId}/content/${file.filename}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "text/plain",
+          },
+          body: content,
+        }
       );
-    } finally {
-      setSaving(false);
+
+      return response.ok;
+    } catch (error) {
+      console.error("파일 저장 중 오류 발생:", error);
+      return false;
     }
   };
 
   if (loading) {
     return (
-      <div className="max-w-full w-full mx-auto py-6 px-6 bg-white rounded-lg shadow-md">
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="w-full h-full flex justify-center items-center p-8">
+        <p>파일 정보를 로딩 중입니다...</p>
+      </div>
+    );
+  }
+
+  if (error || !file) {
+    return (
+      <div className="w-full h-full p-8">
+        <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          {error || "파일을 찾을 수 없습니다"}
         </div>
+        <button
+          onClick={onClose}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        >
+          돌아가기
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-full w-full mx-auto py-6 px-6 bg-white rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">
-          {filename ? `파일 편집: ${filename}` : "파일 편집"}
-        </h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving || content === originalContent}
-            className={`px-4 py-2 rounded-md text-white focus:outline-none ${
-              saving || content === originalContent
-                ? "bg-gray-400"
-                : "bg-blue-500 hover:bg-blue-600"
-            }`}
-          >
-            {saving ? "저장 중..." : "저장"}
-          </button>
-        </div>
+    <div className="w-full h-full p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">{file.filename} 편집</h1>
+        <button
+          onClick={onClose}
+          className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+        >
+          목록으로 돌아가기
+        </button>
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded">{error}</div>
-      )}
-
-      <div className="w-full border border-gray-300 rounded-md mb-4 overflow-hidden">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full h-[70vh] p-4 font-mono text-gray-800 focus:outline-none resize-none"
-          spellCheck="false"
-        ></textarea>
-      </div>
+      <CodeEditor
+        fileId={file.id}
+        filename={file.filename}
+        userId={file.userId}
+        onSave={handleSaveContent}
+      />
     </div>
   );
 }
