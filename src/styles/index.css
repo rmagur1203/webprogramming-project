@@ -12,6 +12,53 @@
   #root {
     @apply w-full h-full flex flex-col;
   }
+  
+  /* 다크 테마 적용 */
+  body.prism-tomorrow,
+  body.prism-okaidia,
+  body.prism-dark {
+    @apply bg-[#1a202c] text-[#f7fafc];
+  }
+  
+  /* 다크 테마에서 배경색 변경 */
+  body.prism-tomorrow .bg-white,
+  body.prism-okaidia .bg-white,
+  body.prism-dark .bg-white {
+    @apply bg-gray-800;
+  }
+  
+  /* 다크 테마에서 텍스트 색상 변경 */
+  body.prism-tomorrow .text-gray-800,
+  body.prism-okaidia .text-gray-800,
+  body.prism-dark .text-gray-800 {
+    @apply text-gray-100;
+  }
+  
+  body.prism-tomorrow .text-gray-600,
+  body.prism-okaidia .text-gray-600,
+  body.prism-dark .text-gray-600 {
+    @apply text-gray-300;
+  }
+  
+  body.prism-tomorrow .text-gray-500,
+  body.prism-okaidia .text-gray-500,
+  body.prism-dark .text-gray-500 {
+    @apply text-gray-400;
+  }
+  
+  /* 다크 테마에서 배경색 변경 */
+  body.prism-tomorrow .bg-gray-100,
+  body.prism-okaidia .bg-gray-100,
+  body.prism-dark .bg-gray-100 {
+    @apply bg-gray-900;
+  }
+  
+  /* 다크 테마에서 그림자 색상 변경 */
+  body.prism-tomorrow .shadow-md,
+  body.prism-okaidia .shadow-md,
+  body.prism-dark .shadow-md {
+    --tw-shadow-color: rgba(0, 0, 0, 0.3);
+  }
 }
 
 body::before {
