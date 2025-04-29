@@ -303,6 +303,18 @@ export function CodeEditor({
 
     setIsDarkMode(theme !== "light" && theme !== "solarized");
 
+    // 에디터 컨테이너 찾아서 다크 모드 클래스 추가
+    const editorContainer = document.querySelector(".editor-container");
+    if (editorContainer) {
+      if (theme !== "light" && theme !== "solarized") {
+        editorContainer.classList.add("dark-theme");
+        editorContainer.classList.remove("light-theme");
+      } else {
+        editorContainer.classList.add("light-theme");
+        editorContainer.classList.remove("dark-theme");
+      }
+    }
+
     // Prism 테마의 테두리 스타일 재정의
     const styleEl = document.createElement("style");
     styleEl.textContent = `
@@ -794,12 +806,71 @@ export function CodeEditor({
       body.prism-okaidia .editor-preview,
       body.prism-dark .editor-preview {
         background-color: #282c34 !important;
+        color: #f8f8f2 !important;
+      }
+      
+      body.prism-tomorrow .editor-container,
+      body.prism-okaidia .editor-container,
+      body.prism-dark .editor-container {
+        background-color: #1e1e1e !important;
+      }
+      
+      body.prism-tomorrow .line-numbers-container,
+      body.prism-okaidia .line-numbers-container,
+      body.prism-dark .line-numbers-container {
+        background-color: #252526 !important;
+        border-color: #333 !important;
       }
       
       /* 라이트 모드일 때 에디터 스타일 */
       body.prism-light .editor-preview,
       body.prism-solarized .editor-preview {
         background-color: white !important;
+        color: #333 !important;
+      }
+      
+      body.prism-light .editor-container,
+      body.prism-solarized .editor-container {
+        background-color: white !important;
+      }
+      
+      body.prism-light .line-numbers-container,
+      body.prism-solarized .line-numbers-container {
+        background-color: #f9fafb !important;
+        border-color: #eee !important;
+      }
+      
+      /* 다크 모드 클래스 스타일 */
+      .dark-theme {
+        background-color: #1e1e1e !important;
+        color: #f8f8f2 !important;
+      }
+      
+      .dark-theme .editor-preview {
+        background-color: #282c34 !important;
+        color: #f8f8f2 !important;
+      }
+      
+      .dark-theme .line-numbers-container {
+        background-color: #252526 !important;
+        border-color: #333 !important;
+        color: #6c7280 !important;
+      }
+      
+      /* 라이트 모드 클래스 스타일 */
+      .light-theme {
+        background-color: white !important;
+        color: #333 !important;
+      }
+      
+      .light-theme .editor-preview {
+        background-color: white !important;
+        color: #333 !important;
+      }
+      
+      .light-theme .line-numbers-container {
+        background-color: #f9fafb !important;
+        border-color: #eee !important;
       }
     `;
     document.head.appendChild(styleEl);
@@ -956,7 +1027,12 @@ export function CodeEditor({
         ) : (
           <div
             className="relative editor-container"
-            style={{ height: "500px" }}
+            style={{
+              height: "500px",
+              backgroundColor: isDarkMode ? "#1e1e1e" : "white",
+              borderRadius: "0.375rem",
+              overflow: "hidden",
+            }}
           >
             {showLineNumbers && (
               <div
@@ -966,6 +1042,7 @@ export function CodeEditor({
                   userSelect: "none",
                   zIndex: 10,
                   pointerEvents: "none",
+                  backgroundColor: isDarkMode ? "#252526" : "#f9fafb",
                 }}
               >
                 <div
