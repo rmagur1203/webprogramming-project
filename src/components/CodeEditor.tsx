@@ -906,8 +906,8 @@ export function CodeEditor({
   }, []);
 
   return (
-    <div className="w-full h-full bg-gray-50">
-      <div className="p-6">
+    <div className="w-full h-full bg-gray-50 dark:bg-gray-900">
+      <div className={`p-6 ${isDarkMode ? "bg-gray-900" : "bg-gray-50"}`}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">{filename}</h2>
           <div className="flex items-center gap-2">
@@ -951,16 +951,29 @@ export function CodeEditor({
           </div>
         )}
 
-        <div className="mb-4 p-3 bg-white shadow-sm rounded flex flex-wrap items-center gap-4">
+        <div
+          className={`mb-4 p-3 rounded flex flex-wrap items-center gap-4 shadow-sm ${
+            isDarkMode ? "bg-gray-800" : "bg-white"
+          }`}
+        >
           <div className="flex items-center gap-2">
-            <label htmlFor="theme" className="text-sm">
+            <label
+              htmlFor="theme"
+              className={`text-sm ${
+                isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               테마:{" "}
             </label>
             <select
               id="theme"
               value={theme}
               onChange={(e) => setTheme(e.target.value as Theme)}
-              className="px-2 py-1 rounded bg-gray-100"
+              className={`px-2 py-1 rounded ${
+                isDarkMode
+                  ? "bg-gray-700 text-gray-200"
+                  : "bg-gray-100 text-gray-800"
+              }`}
             >
               <option value="light">라이트</option>
               <option value="tomorrow">다크</option>
@@ -976,9 +989,18 @@ export function CodeEditor({
               id="lineNumbers"
               checked={showLineNumbers}
               onChange={() => setShowLineNumbers(!showLineNumbers)}
-              className="rounded"
+              className={`rounded ${
+                isDarkMode
+                  ? "bg-gray-700 border-gray-600"
+                  : "bg-white border-gray-300"
+              }`}
             />
-            <label htmlFor="lineNumbers">행 번호</label>
+            <label
+              htmlFor="lineNumbers"
+              className={isDarkMode ? "text-gray-300" : "text-gray-700"}
+            >
+              행 번호
+            </label>
           </div>
 
           <div className="flex items-center gap-2">
@@ -987,9 +1009,18 @@ export function CodeEditor({
               id="autoSave"
               checked={autoSave}
               onChange={() => setAutoSave(!autoSave)}
-              className="rounded"
+              className={`rounded ${
+                isDarkMode
+                  ? "bg-gray-700 border-gray-600"
+                  : "bg-white border-gray-300"
+              }`}
             />
-            <label htmlFor="autoSave">자동 저장</label>
+            <label
+              htmlFor="autoSave"
+              className={isDarkMode ? "text-gray-300" : "text-gray-700"}
+            >
+              자동 저장
+            </label>
           </div>
 
           <div className="flex items-center gap-2">
@@ -998,22 +1029,45 @@ export function CodeEditor({
               id="autoComplete"
               checked={autoComplete}
               onChange={() => setAutoComplete(!autoComplete)}
-              className="rounded"
+              className={`rounded ${
+                isDarkMode
+                  ? "bg-gray-700 border-gray-600"
+                  : "bg-white border-gray-300"
+              }`}
             />
-            <label htmlFor="autoComplete">자동완성</label>
+            <label
+              htmlFor="autoComplete"
+              className={isDarkMode ? "text-gray-300" : "text-gray-700"}
+            >
+              자동완성
+            </label>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={decreaseFontSize}
-              className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+              className={`px-2 py-1 rounded ${
+                isDarkMode
+                  ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+              }`}
             >
               A-
             </button>
-            <span className="text-sm">{fontSize}px</span>
+            <span
+              className={`text-sm ${
+                isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
+              {fontSize}px
+            </span>
             <button
               onClick={increaseFontSize}
-              className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+              className={`px-2 py-1 rounded ${
+                isDarkMode
+                  ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+              }`}
             >
               A+
             </button>
@@ -1021,8 +1075,14 @@ export function CodeEditor({
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64 bg-white shadow-sm rounded">
-            <p>로딩 중...</p>
+          <div
+            className={`flex justify-center items-center h-64 shadow-sm rounded ${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>
+              로딩 중...
+            </p>
           </div>
         ) : (
           <div
@@ -1138,7 +1198,11 @@ export function CodeEditor({
           </div>
         )}
 
-        <div className="mt-2 text-xs text-gray-500 p-2">
+        <div
+          className={`mt-2 text-xs p-2 ${
+            isDarkMode ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           키보드 단축키: Ctrl+S (저장), Tab (들여쓰기), ESC (자동완성 닫기)
         </div>
       </div>
